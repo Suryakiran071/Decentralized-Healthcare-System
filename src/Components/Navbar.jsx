@@ -35,7 +35,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-indigo-600 p-4 flex justify-between items-center text-white">
+    <nav className="bg-white p-4 flex justify-between items-center text-black">
       {/* Left Side: MedEase Logo */}
       <div className="text-2xl font-semibold">
         MedEase
@@ -45,14 +45,14 @@ const Navbar = () => {
       <div className="flex items-center space-x-6">
         {/* Login Link */}
         {!user && (
-          <Link to="/login" className="hover:underline">
+          <Link to="/login" className="text-black hover:text-gray-700">
             Login
           </Link>
         )}
 
         {/* Appointments Link */}
         {user && (
-          <Link to="/appointments" className="hover:underline">
+          <Link to="/appointments" className="text-black hover:text-gray-700">
             Appointments
           </Link>
         )}
@@ -60,10 +60,10 @@ const Navbar = () => {
         {/* Profile Circle */}
         {user && (
           <div className="relative">
-            {/* Profile Circle */}
+            {/* Profile Circle with gray background and black border */}
             <button
               onClick={() => setDropdownVisible(!dropdownVisible)}
-              className="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center text-white"
+              className="w-8 h-8 bg-gray-500 border-2 border-black rounded-full flex items-center justify-center text-white"
             >
               {getInitials(user.email)}
             </button>
