@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
-import { auth } from '../firebase';
+import { auth } from '../../firebase';
 import { Link, useNavigate } from 'react-router-dom';
-import doc from '../assets/doc.jpg'; // Ensure the logo image is here
+import doc from '../../assets/doc.jpg'; // Ensure the logo image is here
 import { FaGoogle } from 'react-icons/fa'; // Google icon from react-icons
 
 const Signup = () => {

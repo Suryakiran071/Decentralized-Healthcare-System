@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
-import { auth } from '../firebase';
+import { auth } from '../../firebase';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaGoogle } from 'react-icons/fa'; // Google icon from react-icons
-import doc from '../assets/doc.jpg'; // Ensure the logo image is here
+import doc from '../../assets/doc.jpg'; // Ensure the logo image is here
 
 const Login = () => {
   const [email, setEmail] = useState('');
