@@ -8,6 +8,8 @@ const Healthcare = () => {
   const [account, setAccount] = useState(null);
   const [isOwner, setIsOwner] = useState(null);
   const [providerAddress, setProviderAddress] = useState("");
+  const [patientID, setPatientID] =useState('');
+  const [patientRecords, setPatientRecords] = useState([]);
 
   const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS;
 
@@ -212,6 +214,16 @@ const Healthcare = () => {
     connectWallet();
   }, []);
 
+  const fetchPatientRecords = async () => {
+	try{
+		const records = await contract.getPatientRecords(patientID);
+
+		setPatientRecords(records);
+	} catch(error){
+		console.error("Error fetching patient records", error)
+	}
+  }
+
   const authorizeProvider = async () => {
     try {
       const tx = await contract.authorizeProvider(providerAddress);
@@ -236,6 +248,19 @@ const Healthcare = () => {
           You are the contract Owner
         </p>
       )}
+
+	  <div className='form-section'>
+		<h2>Fetch Patient Records</h2>
+		<input type="text" className='input-field' placeholder='Enter Patient ID' value={patientID} onChange={(e) => setPatientID(e.target.value)} />
+		<button
+          className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 focus:outline-none"
+          onClick={fetchPatientRecords}
+        >
+          Fetch Records
+        </button>
+	  </div>
+
+	  <div className=''></div>
 
       <div className="form-section bg-gray-100 p-6 rounded-md shadow-lg max-w-md mx-auto">
         <h2 className="text-2xl font-semibold text-center mb-4">Authorize Healthcare Provider</h2>

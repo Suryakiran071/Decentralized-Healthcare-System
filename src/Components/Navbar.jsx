@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
+import logo from '../assets/logo_nobg.png';  // Import your logo image here
 
 const Navbar = () => {
   const [user, setUser] = useState(null);
@@ -35,10 +36,10 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white p-4 flex justify-between items-center text-black">
-      {/* Left Side: MedEase Logo */}
-      <div className="text-2xl font-semibold">
-        MedEase
+    <nav className="bg-white p-5 flex justify-between items-center text-black">
+      {/* Left Side: Logo */}
+      <div className="flex items-center ml-8">
+        <img src={logo} alt="Logo" className="h-10 w-auto" />  {/* Render the logo */}
       </div>
 
       {/* Right Side: Links and Profile */}

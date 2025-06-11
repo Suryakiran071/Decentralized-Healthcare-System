@@ -13,6 +13,7 @@ import Layout from '../src/Components/Layout';
 import Support from './Pages/Support/Support';
 import UserSupportForm from './Pages/Support/UserSupportForm';
 import UserSupportList from './Pages/Support/UserSupportList';
+import PatientLandingPage from './Pages/Home/PatientLandingPage';
 
 
 const App = () => {
@@ -24,6 +25,7 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/user_appointments" element={<UserAppointments />} />
+        <Route path="/patientlanding" element={<PatientLandingPage />} />
 
         
         {/* Routes that need the sidebar */}
