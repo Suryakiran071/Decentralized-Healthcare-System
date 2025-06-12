@@ -7,6 +7,7 @@ const Healthcare = () => {
   const { authorizeProvider, addRecord, getPatientRecords, records, loading } = useHealthcareRecords();
   
   const [providerAddress, setProviderAddress] = useState("");
+
   const [patientID, setPatientID] = useState("");
   const [patientName, setPatientName] = useState("");
   const [diagnosis, setDiagnosis] = useState("");
@@ -14,6 +15,7 @@ const Healthcare = () => {
   const [recordPatientID, setRecordPatientID] = useState("");
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
 
   const handleConnectWallet = async () => {
     try {
@@ -248,6 +250,7 @@ const Healthcare = () => {
             </div>
           )}
         </div>
+
       </div>
     </div>
   );

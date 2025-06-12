@@ -1,11 +1,11 @@
-// src/Login.js
-
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth } from '../../firebase';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaGoogle } from 'react-icons/fa'; // Google icon from react-icons
 import doc from '../../assets/doc.jpg'; // Ensure the logo image is here
+import { doc as firestoreDoc, getDoc } from "firebase/firestore"; // Firestore functions
+import { db } from '../../firebase'; // Your Firestore instance
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -13,11 +13,13 @@ const Login = () => {
   const [error, setError] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
   const navigate = useNavigate();
+
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+
       
       // Define admin emails
       const ADMIN_EMAILS = [
@@ -31,15 +33,18 @@ const Login = () => {
         navigate('/dashboard');
       } else {
         navigate('/user');
+
       }
     } catch (error) {
-      setError("User doesn't exist. Sign up first.");
+      setError("Invalid credentials or user doesn't exist. Sign up first.");
     }
   };
 
+  // Handle Google login
   const handleGoogleLogin = async () => {
     const provider = new GoogleAuthProvider();
     try {
+
       const userCredential = await signInWithPopup(auth, provider);
       const user = userCredential.user;
       
@@ -55,6 +60,7 @@ const Login = () => {
         navigate('/dashboard');
       } else {
         navigate('/user');
+
       }
     } catch (error) {
       setError("Error logging in with Google. Please try again.");
@@ -63,11 +69,10 @@ const Login = () => {
 
   return (
     <div className="flex min-h-screen">
-
       {/* Left Side: Image Section */}
       <div className="hidden md:block w-1/2 h-screen relative">
         <img
-          src={doc} // You can replace this with any image you'd like
+          src={doc}
           alt="Background"
           className="absolute inset-0 w-full h-full object-cover"
         />

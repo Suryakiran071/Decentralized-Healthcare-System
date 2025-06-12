@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '../contexts/AuthContext';
+import logo from '../assets/logo_nobg.png';  /
 
 const Navbar = () => {
   const { user, isAdmin, isUser } = useAuth();
@@ -28,7 +29,9 @@ const Navbar = () => {
 
   return (
     <nav className="bg-white p-4 flex justify-between items-center text-black border-b border-gray-200">
-      {/* Left Side: MedEase Logo */}
+      <div className="flex items-center ml-8">
+        <img src={logo} alt="Logo" className="h-10 w-auto" />  {/* Render the logo */}
+      </div>
       <div className="text-2xl font-semibold">
         <Link to={user ? (isAdmin ? '/dashboard' : '/user') : '/login'}>
           MedEase
@@ -70,7 +73,8 @@ const Navbar = () => {
             </Link>
           </>
         )}
-      </div>
+    <nav className="bg-white p-5 flex justify-between items-center text-black">
+      
 
       {/* Right Side: Login/Profile */}
       <div className="flex items-center space-x-6">
@@ -94,6 +98,7 @@ const Navbar = () => {
 
             {/* Dropdown Menu */}
             {dropdownVisible && (
+
               <div className="absolute right-0 mt-2 bg-white text-black rounded-lg shadow-lg p-4 w-48 border border-gray-200">
                 <p className="text-sm mb-2 font-medium">{user.email}</p>
                 <p className="text-xs text-gray-500 mb-3">
@@ -103,6 +108,7 @@ const Navbar = () => {
                 <button
                   onClick={handleLogout}
                   className="text-red-500 hover:underline text-sm"
+
                 >
                   Logout
                 </button>
