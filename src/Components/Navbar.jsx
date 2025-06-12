@@ -1,6 +1,4 @@
-// src/Navbar.js
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
@@ -90,8 +88,9 @@ const Navbar = () => {
           <div className="relative">
             {/* Profile Circle with gray background and black border */}
             <button
+              ref={profileButtonRef}
               onClick={() => setDropdownVisible(!dropdownVisible)}
-              className="w-8 h-8 bg-gray-500 border-2 border-black rounded-full flex items-center justify-center text-white"
+              className="w-10 h-10 bg-gray-300 border-2 border-red rounded-full flex items-center justify-center text-black"
             >
               {getInitials(user.email)}
             </button>
@@ -99,12 +98,14 @@ const Navbar = () => {
             {/* Dropdown Menu */}
             {dropdownVisible && (
 
+
               <div className="absolute right-0 mt-2 bg-white text-black rounded-lg shadow-lg p-4 w-48 border border-gray-200">
                 <p className="text-sm mb-2 font-medium">{user.email}</p>
                 <p className="text-xs text-gray-500 mb-3">
                   Role: {isAdmin ? 'Admin' : 'Patient'}
                 </p>
                 <hr className="mb-3" />
+
                 <button
                   onClick={handleLogout}
                   className="text-red-500 hover:underline text-sm"

@@ -99,6 +99,7 @@ const App = () => {
             } 
           />
 
+
           {/* Catch all route */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
