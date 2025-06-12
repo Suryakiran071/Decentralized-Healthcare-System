@@ -72,10 +72,28 @@ const Navbar = () => {
             {/* Dropdown Menu */}
             {dropdownVisible && (
               <div className="absolute right-0 mt-2 bg-white text-black rounded-lg shadow-lg p-4 w-48">
-                <p className="text-sm mb-2">{user.email}</p>
+                {/* Profile Dropdown Links */}
+                <Link
+                  to="/profile"
+                  className="block text-sm text-gray-700 mb-2 hover:bg-gray-200 p-2 rounded-md"
+                >
+                  Profile
+                </Link>
+                <Link
+                  to="/records"
+                  className="block text-sm text-gray-700 mb-2 hover:bg-gray-200 p-2 rounded-md"
+                >
+                  View Records
+                </Link>
+                <Link
+                  to="/support"
+                  className="block text-sm text-gray-700 mb-2 hover:bg-gray-200 p-2 rounded-md"
+                >
+                  Support
+                </Link>
                 <button
                   onClick={handleLogout}
-                  className="text-red-500 hover:underline"
+                  className="text-red-500 hover:bg-gray-200 p-2 rounded-md w-full text-left"
                 >
                   Logout
                 </button>

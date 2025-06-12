@@ -14,7 +14,7 @@ import Support from './Pages/Support/Support';
 import UserSupportForm from './Pages/Support/UserSupportForm';
 import UserSupportList from './Pages/Support/UserSupportList';
 import PatientLandingPage from './Pages/Home/PatientLandingPage';
-
+import Profile from './Pages/Profile/Profile';
 
 const App = () => {
   return (
@@ -26,6 +26,7 @@ const App = () => {
         <Route path="/signup" element={<Signup />} />
         <Route path="/user_appointments" element={<UserAppointments />} />
         <Route path="/patientlanding" element={<PatientLandingPage />} />
+        <Route path="/profile" element={<Profile />} />
 
         
         {/* Routes that need the sidebar */}
