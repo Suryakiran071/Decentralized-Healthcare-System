@@ -14,27 +14,26 @@ const Login = () => {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const navigate = useNavigate();
 
-  // Handle regular email/password login
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Check user role from Firestore
-      const userDocRef = firestoreDoc(db, "users", user.uid);
-      const userDoc = await getDoc(userDocRef);
-      if (userDoc.exists()) {
-        const userRole = userDoc.data().role;
-
-        // Redirect based on role
-        if (userRole === "admin") {
-          navigate('/dashboard'); // Redirect to admin dashboard
-        } else {
-          navigate('/patientlanding'); // Redirect to patient landing page
-        }
+      
+      // Define admin emails
+      const ADMIN_EMAILS = [
+        'admin@medease.com',
+        'healthcare@medease.com',
+        'provider@medease.com'
+      ];
+      
+      // Redirect based on user role
+      if (ADMIN_EMAILS.includes(user.email)) {
+        navigate('/dashboard');
       } else {
-        setError("User data not found. Please contact support.");
+        navigate('/user');
+
       }
     } catch (error) {
       setError("Invalid credentials or user doesn't exist. Sign up first.");
@@ -45,23 +44,23 @@ const Login = () => {
   const handleGoogleLogin = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
 
-      // Check user role from Firestore after Google login
-      const userDocRef = firestoreDoc(db, "users", user.uid);
-      const userDoc = await getDoc(userDocRef);
-      if (userDoc.exists()) {
-        const userRole = userDoc.data().role;
-
-        // Redirect based on role
-        if (userRole === "admin") {
-          navigate('/dashboard'); // Redirect to admin dashboard
-        } else {
-          navigate('/patientlanding'); // Redirect to patient landing page
-        }
+      const userCredential = await signInWithPopup(auth, provider);
+      const user = userCredential.user;
+      
+      // Define admin emails
+      const ADMIN_EMAILS = [
+        'admin@medease.com',
+        'healthcare@medease.com',
+        'provider@medease.com'
+      ];
+      
+      // Redirect based on user role
+      if (ADMIN_EMAILS.includes(user.email)) {
+        navigate('/dashboard');
       } else {
-        setError("User data not found. Please contact support.");
+        navigate('/user');
+
       }
     } catch (error) {
       setError("Error logging in with Google. Please try again.");
