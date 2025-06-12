@@ -13,7 +13,6 @@ const Signup = () => {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
   const navigate = useNavigate();
-
   const handleSignup = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
@@ -31,8 +30,22 @@ const Signup = () => {
   const handleGoogleSignup = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      navigate('/dashboard');
+      const userCredential = await signInWithPopup(auth, provider);
+      const user = userCredential.user;
+      
+      // Define admin emails
+      const ADMIN_EMAILS = [
+        'admin@medease.com',
+        'healthcare@medease.com',
+        'provider@medease.com'
+      ];
+      
+      // Redirect based on user role
+      if (ADMIN_EMAILS.includes(user.email)) {
+        navigate('/dashboard');
+      } else {
+        navigate('/user');
+      }
     } catch (error) {
       setError(error.message);
     }

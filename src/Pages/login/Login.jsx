@@ -13,12 +13,25 @@ const Login = () => {
   const [error, setError] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
   const navigate = useNavigate();
-
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigate('/dashboard'); // Redirect to Dashboard page after successful login
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      // Define admin emails
+      const ADMIN_EMAILS = [
+        'admin@medease.com',
+        'healthcare@medease.com',
+        'provider@medease.com'
+      ];
+      
+      // Redirect based on user role
+      if (ADMIN_EMAILS.includes(user.email)) {
+        navigate('/dashboard');
+      } else {
+        navigate('/user');
+      }
     } catch (error) {
       setError("User doesn't exist. Sign up first.");
     }
@@ -27,8 +40,22 @@ const Login = () => {
   const handleGoogleLogin = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      navigate('/dashboard'); // Redirect after Google sign-in
+      const userCredential = await signInWithPopup(auth, provider);
+      const user = userCredential.user;
+      
+      // Define admin emails
+      const ADMIN_EMAILS = [
+        'admin@medease.com',
+        'healthcare@medease.com',
+        'provider@medease.com'
+      ];
+      
+      // Redirect based on user role
+      if (ADMIN_EMAILS.includes(user.email)) {
+        navigate('/dashboard');
+      } else {
+        navigate('/user');
+      }
     } catch (error) {
       setError("Error logging in with Google. Please try again.");
     }
