@@ -28,6 +28,9 @@ const App = () => {
         <Route path="/patientlanding" element={<PatientLandingPage />} />
         <Route path="/profile" element={<Profile />} />
 
+        {/* User Support Routes */}
+        <Route path="/usersupport" element={<UserSupportList />} />
+        <Route path="/support/submit" element={<UserSupportForm />} />
         
         {/* Routes that need the sidebar */}
         <Route path="/healthcare" element={<Layout><Healthcare /></Layout>} />
@@ -35,9 +38,6 @@ const App = () => {
         <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
         <Route path="/support" element={<Layout><Support /></Layout>} />
 
-        {/* User Support Routes */}
-        <Route path="/usersupport" element={<Layout><UserSupportList /></Layout>} />
-        <Route path="/support/submit" element={<Layout><UserSupportForm /></Layout>} />
 
       </Routes>
     </Router>

@@ -1,6 +1,4 @@
-// src/Navbar.js
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
@@ -11,13 +9,36 @@ const Navbar = () => {
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const navigate = useNavigate();
 
+  // Create a reference for the dropdown and button to detect outside clicks
+  const dropdownRef = useRef(null);
+  const profileButtonRef = useRef(null);
+
   // Get the current user when the component mounts
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
       setUser(currentUser);
     });
 
-    return () => unsubscribe(); // Clean up the subscription
+    // Function to handle clicks outside the dropdown
+    const handleClickOutside = (event) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target) &&
+        profileButtonRef.current &&
+        !profileButtonRef.current.contains(event.target)
+      ) {
+        setDropdownVisible(false);
+      }
+    };
+
+    // Add event listener to detect outside clicks
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      // Cleanup the event listener on component unmount
+      document.removeEventListener('mousedown', handleClickOutside);
+      unsubscribe(); // Clean up the Firebase subscription
+    };
   }, []);
 
   // Logout function
@@ -63,16 +84,26 @@ const Navbar = () => {
           <div className="relative">
             {/* Profile Circle with gray background and black border */}
             <button
+              ref={profileButtonRef}
               onClick={() => setDropdownVisible(!dropdownVisible)}
-              className="w-8 h-8 bg-gray-500 border-2 border-black rounded-full flex items-center justify-center text-white"
+              className="w-10 h-10 bg-gray-300 border-2 border-red rounded-full flex items-center justify-center text-black"
             >
               {getInitials(user.email)}
             </button>
 
             {/* Dropdown Menu */}
             {dropdownVisible && (
-              <div className="absolute right-0 mt-2 bg-white text-black rounded-lg shadow-lg p-4 w-48">
+              <div
+                ref={dropdownRef}
+                className="absolute right-0 mt-2 bg-white text-black rounded-lg shadow-lg p-4 w-48"
+              >
                 {/* Profile Dropdown Links */}
+                <Link
+                  to="/patientlanding"
+                  className="block text-sm text-gray-700 mb-2 hover:bg-gray-200 p-2 rounded-md"
+                >
+                  Home
+                </Link>
                 <Link
                   to="/profile"
                   className="block text-sm text-gray-700 mb-2 hover:bg-gray-200 p-2 rounded-md"
@@ -86,7 +117,7 @@ const Navbar = () => {
                   View Records
                 </Link>
                 <Link
-                  to="/support"
+                  to="/support/submit"
                   className="block text-sm text-gray-700 mb-2 hover:bg-gray-200 p-2 rounded-md"
                 >
                   Support

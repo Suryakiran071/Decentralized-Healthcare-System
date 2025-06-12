@@ -10,7 +10,7 @@ const PatientLandingPage = () => {
       {/* Welcome Section */}
       <section className="text-center py-12 bg-white">
         <h1 className="text-4xl font-bold text-cyan-600 mb-4">Welcome to MedEase</h1>
-        <p className="text-lg text-gray-700">Your healthcare, simplified. Book appointments, manage your health records, and get support anytime, anywhere.</p>
+        <p className="text-lg text-gray-700">Your healthcare, simplified and secured. Book appointments, manage your health records, and get support anytime, anywhere.</p>
         <div className="mt-6">
           <Link
             to="/user_appointments"
@@ -59,7 +59,7 @@ const PatientLandingPage = () => {
         <h2 className="text-3xl font-semibold mb-4">Ready to Get Started?</h2>
         <p className="text-lg mb-6">Start managing your health today by booking an appointment or accessing your records.</p>
         <Link
-          to="/appointments"
+          to="/user_appointments"
           className="bg-white text-cyan-600 py-3 px-6 rounded-md hover:bg-gray-100"
         >
           Get Started
