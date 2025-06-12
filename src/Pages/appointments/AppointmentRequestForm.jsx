@@ -32,10 +32,29 @@ const AppointmentRequestForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setSuccess('');
-
-    if (!isConnected) {
+    setSuccess('');    if (!isConnected) {
       setError('Please connect your wallet first to book an appointment on the blockchain.');
+      return;
+    }
+
+    // Validate all required fields
+    if (!name.trim()) {
+      setError('Please enter your name.');
+      return;
+    }
+
+    if (!email.trim()) {
+      setError('Please enter your email address.');
+      return;
+    }
+
+    if (!date) {
+      setError('Please select an appointment date.');
+      return;
+    }
+
+    if (!time) {
+      setError('Please select an appointment time.');
       return;
     }
 
@@ -44,9 +63,28 @@ const AppointmentRequestForm = () => {
       return;
     }
 
-    try {
-      // Generate a patient ID based on user UID
-      const patientID = user?.uid ? parseInt(user.uid.slice(-8), 16) % 1000000 : Math.floor(Math.random() * 1000000);
+    if (!reason.trim()) {
+      setError('Please provide a reason for your appointment.');
+      return;
+    }try {
+      // Generate a patient ID based on user UID or create a random one
+      let patientID;
+      if (user?.uid) {
+        // Create a hash from the UID and convert to a safe integer
+        const uidHash = user.uid.split('').reduce((hash, char) => {
+          return ((hash << 5) - hash + char.charCodeAt(0)) & 0xffffffff;
+        }, 0);
+        patientID = Math.abs(uidHash) % 1000000;
+      } else {
+        patientID = Math.floor(Math.random() * 1000000);
+      }
+      
+      // Ensure patientID is a valid positive integer
+      if (isNaN(patientID) || patientID <= 0) {
+        patientID = Math.floor(Math.random() * 1000000) + 1;
+      }
+      
+      console.log('Generated patientID:', patientID); // Debug log
       
       // Book appointment on blockchain
       const appointmentID = await bookAppointment(patientID, doctor);
@@ -63,11 +101,23 @@ const AppointmentRequestForm = () => {
       // Redirect to user dashboard after 3 seconds
       setTimeout(() => {
         navigate('/user');
-      }, 3000);
-
-    } catch (error) {
+      }, 3000);    } catch (error) {
       console.error('Error booking appointment:', error);
-      setError('Failed to book appointment. Please try again.');
+      
+      // Provide more specific error messages
+      if (error.message.includes('Invalid patient ID')) {
+        setError('Invalid patient information. Please try again.');
+      } else if (error.message.includes('Invalid doctor name')) {
+        setError('Please enter a valid doctor name.');
+      } else if (error.message.includes('Contract not connected')) {
+        setError('Blockchain connection lost. Please refresh and try again.');
+      } else if (error.message.includes('user rejected')) {
+        setError('Transaction was cancelled. Please try again to book your appointment.');
+      } else if (error.message.includes('insufficient funds')) {
+        setError('Insufficient funds in your wallet to complete the transaction.');
+      } else {
+        setError('Failed to book appointment. Please check your wallet connection and try again.');
+      }
     }
   };
 
