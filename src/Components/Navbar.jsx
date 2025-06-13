@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '../contexts/AuthContext';
-import logo from '../assets/logo_nobg.png';  /
+import logo from '../assets/Logo_nobg.png';
 
 const Navbar = () => {
   const { user, isAdmin, isUser } = useAuth();
@@ -34,7 +34,6 @@ const Navbar = () => {
       </div>
       <div className="text-2xl font-semibold">
         <Link to={user ? (isAdmin ? '/dashboard' : '/user') : '/login'}>
-          MedEase
         </Link>
       </div>
 
@@ -71,10 +70,8 @@ const Navbar = () => {
             <Link to="/user/support" className="text-black hover:text-gray-700">
               Support
             </Link>
-          </>
-        )}
-    <nav className="bg-white p-5 flex justify-between items-center text-black">
-      
+          </>        )}
+      </div>
 
       {/* Right Side: Login/Profile */}
       <div className="flex items-center space-x-6">
