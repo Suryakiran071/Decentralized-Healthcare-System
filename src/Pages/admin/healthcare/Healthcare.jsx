@@ -1,15 +1,12 @@
 import React, { useState } from 'react';
 import { useContract } from '../../../hooks/useContract';
 import { useHealthcareRecords } from '../../../hooks/useHealthcareRecords';
+import ProviderManagement from '../../../Components/ProviderManagement';
 
 const Healthcare = () => {
-  const { isConnected, connectWallet, account, isOwner } = useContract();
-  const { authorizeProvider, addRecord, getPatientRecords, records, loading } = useHealthcareRecords();
+  const { isConnected, connectWallet, account, isOwner } = useContract();  const { addRecord, getPatientRecords, records, loading } = useHealthcareRecords();
   
-  const [providerAddress, setProviderAddress] = useState("");
-
   const [patientID, setPatientID] = useState("");
-  const [patientName, setPatientName] = useState("");
   const [diagnosis, setDiagnosis] = useState("");
   const [treatment, setTreatment] = useState("");
   const [recordPatientID, setRecordPatientID] = useState("");
@@ -25,27 +22,8 @@ const Healthcare = () => {
       setError('Failed to connect wallet. Please make sure MetaMask is installed.');
     }
   };
-
-  const handleAuthorizeProvider = async () => {
-    if (!providerAddress.trim()) {
-      setError('Please enter a valid provider address.');
-      return;
-    }
-
-    try {
-      setError('');
-      setSuccess('');
-      await authorizeProvider(providerAddress);
-      setSuccess('Provider authorized successfully!');
-      setProviderAddress('');
-    } catch (error) {
-      console.error('Error authorizing provider:', error);
-      setError('Only contract owner can authorize providers.');
-    }
-  };
-
   const handleAddRecord = async () => {
-    if (!patientID || !patientName || !diagnosis || !treatment) {
+    if (!patientID || !diagnosis || !treatment) {
       setError('Please fill in all fields for the medical record.');
       return;
     }
@@ -53,12 +31,11 @@ const Healthcare = () => {
     try {
       setError('');
       setSuccess('');
-      await addRecord(parseInt(patientID), patientName, diagnosis, treatment);
+      await addRecord(parseInt(patientID), diagnosis, treatment);
       setSuccess('Medical record added successfully!');
       
       // Reset form
       setPatientID('');
-      setPatientName('');
       setDiagnosis('');
       setTreatment('');
     } catch (error) {
@@ -129,49 +106,21 @@ const Healthcare = () => {
         <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
           <p className="text-green-800">{success}</p>
         </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Authorize Provider Section */}
-        {isOwner && (
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h2 className="text-2xl font-semibold mb-4">Authorize Healthcare Provider</h2>
-            <div className="space-y-4">
-              <input
-                type="text"
-                className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Provider Wallet Address (0x...)"
-                value={providerAddress}
-                onChange={(e) => setProviderAddress(e.target.value)}
-              />
-              <button
-                onClick={handleAuthorizeProvider}
-                disabled={loading || !isConnected}
-                className="w-full bg-blue-500 text-white py-3 rounded-md hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Processing...' : 'Authorize Provider'}
-              </button>
-            </div>
-          </div>
-        )}
+      )}      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Provider Management Section */}
+        <div className="lg:col-span-2">
+          <ProviderManagement />
+        </div>
 
         {/* Add Medical Record Section */}
         <div className="bg-white p-6 rounded-lg shadow-lg">
           <h2 className="text-2xl font-semibold mb-4">Add Medical Record</h2>
-          <div className="space-y-4">
-            <input
+          <div className="space-y-4">            <input
               type="number"
               className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               placeholder="Patient ID"
               value={patientID}
               onChange={(e) => setPatientID(e.target.value)}
-            />
-            <input
-              type="text"
-              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="Patient Name"
-              value={patientName}
-              onChange={(e) => setPatientName(e.target.value)}
             />
             <input
               type="text"

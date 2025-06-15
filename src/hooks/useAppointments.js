@@ -1,5 +1,6 @@
 // src/hooks/useAppointments.js
 import { useState, useCallback, useEffect } from 'react';
+import { ethers } from 'ethers';
 import { useContract } from './useContract';
 import { 
   getAllAppointments, 
@@ -35,9 +36,7 @@ export const useAppointments = () => {
     });
 
     return () => unsubscribe();
-  }, []);
-
-  const bookAppointment = useCallback(async (patientID, doctor) => {
+  }, []);  const bookAppointment = useCallback(async (patientID, doctorAddress) => {
     if (!contract || !isConnected) {
       throw new Error('Contract not connected');
     }
@@ -47,20 +46,31 @@ export const useAppointments = () => {
       throw new Error('Invalid patient ID');
     }
 
-    if (!doctor || typeof doctor !== 'string' || doctor.trim().length === 0) {
-      throw new Error('Invalid doctor name');
+    // Validate and checksum the doctor address
+    if (!doctorAddress || typeof doctorAddress !== 'string') {
+      throw new Error('Invalid doctor address: address is required');
+    }
+
+    let validDoctorAddress;
+    try {
+      // Use ethers.js to validate and checksum the address
+      validDoctorAddress = ethers.utils.getAddress(doctorAddress);
+    } catch (addressError) {
+      console.error('Address validation error:', addressError);
+      throw new Error(`Invalid doctor address format: ${doctorAddress}`);
     }
 
     try {
       setLoading(true);
-      
-      // Convert patientID to BigNumber to ensure it's properly formatted
+        // Convert patientID to BigNumber to ensure it's properly formatted
       const validPatientID = Math.floor(Number(patientID));
-      const validDoctor = doctor.trim();
       
-      console.log('Booking appointment with:', { patientID: validPatientID, doctor: validDoctor }); // Debug log
+      console.log('Booking appointment with:', { 
+        patientID: validPatientID, 
+        doctor: validDoctorAddress 
+      }); // Debug log
       
-      const tx = await contract.bookAppointment(validPatientID, validDoctor);
+      const tx = await contract.bookAppointment(validPatientID, validDoctorAddress);
       const receipt = await tx.wait();
       
       // Extract appointment ID from transaction receipt
@@ -75,7 +85,7 @@ export const useAppointments = () => {
     } finally {
       setLoading(false);
     }
-  }, [contract, isConnected]);  const approveAppointment = useCallback(async (appointmentId, blockchainId) => {
+  }, [contract, isConnected]);const approveAppointment = useCallback(async (appointmentId, blockchainId) => {
     if (!contract || !isConnected) {
       throw new Error('Contract not connected');
     }
@@ -144,28 +154,76 @@ export const useAppointments = () => {
       setLoading(false);
     }
   }, [contract, isConnected, fetchAppointments]);
-  const getAppointmentStatus = useCallback(async (appointmentID) => {
+  const getAppointmentDetails = useCallback(async (appointmentID) => {
     if (!contract || !isConnected) {
       throw new Error('Contract not connected');
     }
 
-    // Validate appointmentID
     if (!appointmentID || isNaN(appointmentID) || appointmentID <= 0) {
       throw new Error('Invalid appointment ID');
     }
 
     try {
-      const validAppointmentID = Math.floor(Number(appointmentID));
+      setLoading(true);
+      const appointment = await contract.getAppointment(appointmentID);
       
-      console.log('Getting status for appointment ID:', validAppointmentID); // Debug log
-      
-      const status = await contract.getAppointmentStatus(validAppointmentID);
-      return status;
+      return {
+        appointmentID: appointment.appointmentID.toString(),
+        patientID: appointment.patientID.toString(),
+        doctor: appointment.doctor,
+        timestamp: appointment.timestamp.toString(),
+        status: appointment.status
+      };
     } catch (error) {
-      console.error('Error getting appointment status:', error);
+      console.error('Error getting appointment details:', error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   }, [contract, isConnected]);
+
+  const getPatientAppointments = useCallback(async (patientID) => {
+    if (!contract || !isConnected) {
+      throw new Error('Contract not connected');
+    }
+
+    if (!patientID || isNaN(patientID) || patientID <= 0) {
+      throw new Error('Invalid patient ID');
+    }
+
+    try {
+      setLoading(true);
+      const appointments = await contract.getPatientAppointments(patientID);
+      
+      return appointments.map(appointment => ({
+        appointmentID: appointment.appointmentID.toString(),
+        patientID: appointment.patientID.toString(),
+        doctor: appointment.doctor,
+        timestamp: appointment.timestamp.toString(),
+        status: appointment.status
+      }));
+    } catch (error) {
+      console.error('Error getting patient appointments:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, [contract, isConnected]);
+
+  const getTotalAppointments = useCallback(async () => {
+    if (!contract || !isConnected) {
+      throw new Error('Contract not connected');
+    }
+
+    try {
+      const total = await contract.totalAppointments();
+      return total.toString();
+    } catch (error) {
+      console.error('Error getting total appointments:', error);
+      return '0';
+    }
+  }, [contract, isConnected]);
+
   return {
     appointments,
     loading,
@@ -173,7 +231,9 @@ export const useAppointments = () => {
     bookAppointment,
     approveAppointment,
     declineAppointment,
-    getAppointmentStatus,
+    getAppointmentDetails,
+    getPatientAppointments,
+    getTotalAppointments,
     fetchAppointments,
     setAppointments
   };

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useContract } from '../../../hooks/useContract';
 import { useAppointments } from '../../../hooks/useAppointments';
+import PatientRegistration from '../../../Components/PatientRegistration';
+import DoctorSelector from '../../../Components/DoctorSelector';
 import appointment from '../../../assets/Appointment.jpg';
 
 const AppointmentRequestForm = () => {
@@ -10,13 +12,13 @@ const AppointmentRequestForm = () => {
   const { user } = useAuth();
   const { isConnected, connectWallet, account } = useContract();
   const { bookAppointment, loading } = useAppointments();
-  
-  const [name, setName] = useState('');
+    const [name, setName] = useState('');
   const [email, setEmail] = useState(user?.email || '');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [reason, setReason] = useState('');
-  const [doctor, setDoctor] = useState('');
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [patientID, setPatientID] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -56,47 +58,32 @@ const AppointmentRequestForm = () => {
     if (!time) {
       setError('Please select an appointment time.');
       return;
-    }
-
-    if (!doctor.trim()) {
-      setError('Please specify the doctor you want to see.');
+    }    if (!selectedDoctor) {
+      setError('Please select a healthcare provider.');
       return;
     }
 
     if (!reason.trim()) {
       setError('Please provide a reason for your appointment.');
       return;
-    }try {
-      // Generate a patient ID based on user UID or create a random one
-      let patientID;
-      if (user?.uid) {
-        // Create a hash from the UID and convert to a safe integer
-        const uidHash = user.uid.split('').reduce((hash, char) => {
-          return ((hash << 5) - hash + char.charCodeAt(0)) & 0xffffffff;
-        }, 0);
-        patientID = Math.abs(uidHash) % 1000000;
-      } else {
-        patientID = Math.floor(Math.random() * 1000000);
-      }
+    }    if (!patientID) {
+      setError('Patient registration is required before booking appointments.');
+      return;
+    }
+
+    try {
+      console.log('Booking appointment with patientID:', patientID, 'doctor address:', selectedDoctor.address);
       
-      // Ensure patientID is a valid positive integer
-      if (isNaN(patientID) || patientID <= 0) {
-        patientID = Math.floor(Math.random() * 1000000) + 1;
-      }
-      
-      console.log('Generated patientID:', patientID); // Debug log
-      
-      // Book appointment on blockchain
-      const appointmentID = await bookAppointment(patientID, doctor);
-      
-      setSuccess(`Appointment booked successfully! Your appointment ID is: ${appointmentID}`);
+      // Book appointment on blockchain using doctor's address
+      const appointmentID = await bookAppointment(patientID, selectedDoctor.address);
+        setSuccess(`Appointment booked successfully with ${selectedDoctor.name}! Your appointment ID is: ${appointmentID}`);
       
       // Reset form
       setName('');
       setDate('');
       setTime('');
       setReason('');
-      setDoctor('');
+      setSelectedDoctor(null);
 
       // Redirect to user dashboard after 3 seconds
       setTimeout(() => {
@@ -106,9 +93,8 @@ const AppointmentRequestForm = () => {
       
       // Provide more specific error messages
       if (error.message.includes('Invalid patient ID')) {
-        setError('Invalid patient information. Please try again.');
-      } else if (error.message.includes('Invalid doctor name')) {
-        setError('Please enter a valid doctor name.');
+        setError('Invalid patient information. Please try again.');      } else if (error.message.includes('Invalid doctor address')) {
+        setError('Please select a valid healthcare provider.');
       } else if (error.message.includes('Contract not connected')) {
         setError('Blockchain connection lost. Please refresh and try again.');
       } else if (error.message.includes('user rejected')) {
@@ -134,11 +120,13 @@ const AppointmentRequestForm = () => {
 
       {/* Right Side: Form Section */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-8 bg-white">
-        <div className="w-full max-w-md">
-          <h2 className="text-3xl font-bold text-blue-900 mb-2">Book An Appointment Online!</h2>
+        <div className="w-full max-w-md">          <h2 className="text-3xl font-bold text-blue-900 mb-2">Book An Appointment Online!</h2>
           <p className="text-gray-500 mb-6">
             We have the best specialists in your region. Quality, guarantee and professionalism are our slogan!
           </p>
+
+          {/* Patient Registration Component */}
+          <PatientRegistration onRegistrationComplete={setPatientID} />
 
           {/* Wallet Connection Status */}
           {!isConnected ? (
@@ -197,17 +185,10 @@ const AppointmentRequestForm = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Doctor/Specialist</label>
-              <input
-                type="text"
-                className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter doctor name or specialty"
-                value={doctor}
-                onChange={(e) => setDoctor(e.target.value)}
-                required
+            </div>            <div>
+              <DoctorSelector 
+                selectedDoctor={selectedDoctor}
+                onDoctorSelect={setSelectedDoctor}
               />
             </div>
 

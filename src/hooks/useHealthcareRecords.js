@@ -6,15 +6,14 @@ export const useHealthcareRecords = () => {
   const { contract, isConnected } = useContract();
   const [loading, setLoading] = useState(false);
   const [records, setRecords] = useState([]);
-
-  const addRecord = useCallback(async (patientID, patientName, diagnosis, treatment) => {
+  const addRecord = useCallback(async (patientID, diagnosis, treatment) => {
     if (!contract || !isConnected) {
       throw new Error('Contract not connected');
     }
 
     try {
       setLoading(true);
-      const tx = await contract.addRecord(patientID, patientName, diagnosis, treatment);
+      const tx = await contract.addRecord(patientID, diagnosis, treatment);
       await tx.wait();
       return true;
     } catch (error) {
