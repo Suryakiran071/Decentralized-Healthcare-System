@@ -1,8 +1,8 @@
 // src/Pages/user/UserRecords.jsx
 import React, { useState, useEffect } from 'react';
-import { useHealthcareRecords } from '../../hooks/useHealthcareRecords';
-import { useContract } from '../../hooks/useContract';
-import { useAuth } from '../../contexts/AuthContext';
+import { useHealthcareRecords } from '../../../hooks/useHealthcareRecords';
+import { useContract } from '../../../hooks/useContract';
+import { useAuth } from '../../../contexts/AuthContext';
 
 const UserRecords = () => {
   const { user } = useAuth();

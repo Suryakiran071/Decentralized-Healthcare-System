@@ -1,7 +1,7 @@
 // src/Dashboard.js
 
 import React, { useState, useEffect } from 'react';
-import Calendar from '../../Components/Calendar';
+import Calendar from '../../../Components/Calendar.jsx';
 
 const Dashboard = () => {
   // Sample appointment data - in a real app, this would come from your API/database

@@ -3,22 +3,22 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
-import Login from './Pages/login/Login';
-import Signup from './Pages/signup/Signup';
-import Healthcare from './Pages/healthcare/Healthcare';
+import ProtectedRoute from './Components/ProtectedRoute';
+import Login from './Pages/auth/Login';
+import Signup from './Pages/auth/Signup';
+import Healthcare from './Pages/admin/healthcare/Healthcare';
 import Navbar from './Components/Navbar';
-import AdminAppointments from './Pages/appointments/AppointmentList';
-import UserAppointments from './Pages/appointments/AppointmentRequestForm';
-import Dashboard from './Pages/dashboard/Dashboard';
+import AdminAppointments from './Pages/admin/appointments/AppointmentList';
+import UserAppointments from './Pages/user/appointments/AppointmentRequestForm';
+import Dashboard from './Pages/admin/dashboard/Dashboard';
 import Layout from './Components/Layout';
 import UserLayout from './Components/UserLayout';
-import Support from './Pages/Support/Support';
-import UserSupportForm from './Pages/Support/UserSupportForm';
-import UserSupportList from './Pages/Support/UserSupportList';
+import Support from './Pages/admin/support/Support';
+import UserSupportForm from './Pages/user/support/UserSupportForm';
+import UserSupportList from './Pages/user/support/UserSupportList';
 
-import User from './Pages/user/user';
-import UserRecords from './Pages/user/UserRecords';
+import User from './Pages/user/dashboard/UserDashboard';
+import UserRecords from './Pages/user/records/UserRecords';
 
 const App = () => {
   return (

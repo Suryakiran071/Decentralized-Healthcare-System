@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useContract } from '../../hooks/useContract';
-import { useHealthcareRecords } from '../../hooks/useHealthcareRecords';
+import { useContract } from '../../../hooks/useContract';
+import { useHealthcareRecords } from '../../../hooks/useHealthcareRecords';
 
 const Healthcare = () => {
   const { isConnected, connectWallet, account, isOwner } = useContract();

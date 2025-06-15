@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useContract } from '../../hooks/useContract';
-import { useAppointments } from '../../hooks/useAppointments';
+import { useContract } from '../../../hooks/useContract';
+import { useAppointments } from '../../../hooks/useAppointments';
 
 const AppointmentList = () => {
   const { isConnected, connectWallet, account } = useContract();

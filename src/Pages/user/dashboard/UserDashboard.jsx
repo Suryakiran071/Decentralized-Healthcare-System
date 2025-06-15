@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { useContract } from '../../hooks/useContract';
+import { useAuth } from '../../../contexts/AuthContext';
+import { useContract } from '../../../hooks/useContract';
 
 export default function User() {
   const { user } = useAuth();

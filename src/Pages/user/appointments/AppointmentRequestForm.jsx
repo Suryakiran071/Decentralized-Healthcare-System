@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { useContract } from '../../hooks/useContract';
-import { useAppointments } from '../../hooks/useAppointments';
-import appointment from '../../assets/Appointment.jpg';
+import { useAuth } from '../../../contexts/AuthContext';
+import { useContract } from '../../../hooks/useContract';
+import { useAppointments } from '../../../hooks/useAppointments';
+import appointment from '../../../assets/Appointment.jpg';
 
 const AppointmentRequestForm = () => {
   const navigate = useNavigate();
