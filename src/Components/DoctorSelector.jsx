@@ -22,7 +22,7 @@ const DoctorSelector = ({ onDoctorSelect, selectedDoctor }) => {
       available: true
     },
     {
-      address: '0x9CD8362D2C6C64C7D2E7D4F5E6F7A8B9C0D1E2F3',
+      address: '0xc6272e8032853d7F12d2caDcb35eD742990D6C61',
       name: 'Dr. Emily Davis',
       specialty: 'Dermatology',
       available: true

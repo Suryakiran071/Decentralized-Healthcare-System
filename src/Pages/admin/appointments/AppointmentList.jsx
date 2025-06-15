@@ -3,23 +3,27 @@ import { useContract } from '../../../hooks/useContract';
 import { useAppointments } from '../../../hooks/useAppointments';
 
 const AppointmentList = () => {
-  const { isConnected, connectWallet, account } = useContract();
-  const { 
+  const { isConnected, connectWallet, account } = useContract();  const { 
     appointments, 
+    blockchainAppointments,
     approveAppointment, 
     declineAppointment, 
     loading, 
     error: appointmentsError,
-    fetchAppointments 
+    fetchAppointments,
+    fetchBlockchainAppointments
   } = useAppointments();
   
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-
   // Fetch appointments on component mount
   useEffect(() => {
-    fetchAppointments();
-  }, [fetchAppointments]);
+    if (isConnected) {
+      fetchBlockchainAppointments();
+    } else {
+      fetchAppointments(); // Fallback to Firestore
+    }
+  }, [isConnected, fetchAppointments, fetchBlockchainAppointments]);
 
   const handleConnectWallet = async () => {
     try {
@@ -28,15 +32,9 @@ const AppointmentList = () => {
     } catch (error) {
       setError('Failed to connect wallet. Please make sure MetaMask is installed.');
     }
-  };
-  const handleApprove = async (id, blockchainId) => {
+  };  const handleApprove = async (id, blockchainId) => {
     if (!isConnected) {
       setError('Please connect your wallet first.');
-      return;
-    }
-
-    if (!blockchainId) {
-      setError('This appointment does not have a blockchain ID. Cannot approve on blockchain.');
       return;
     }
 
@@ -44,38 +42,34 @@ const AppointmentList = () => {
       setError('');
       setSuccess('');
       
-      // Update both blockchain and Firestore
-      await approveAppointment(id, blockchainId);
+      // Use the appointment ID from blockchain (for blockchain appointments) or blockchainId (for legacy)
+      const appointmentId = blockchainId || id;
+      await approveAppointment(appointmentId);
       
-      setSuccess(`Appointment approved successfully on blockchain!`);
+      setSuccess(`Appointment approved successfully!`);
     } catch (error) {
       console.error('Error approving appointment:', error);
       setError('Failed to approve appointment. You may not be authorized or the appointment may not exist on blockchain.');
     }
   };
-
   const handleDecline = async (id, blockchainId) => {
     if (!isConnected) {
       setError('Please connect your wallet first.');
       return;
     }
 
-    if (!blockchainId) {
-      setError('This appointment does not have a blockchain ID. Cannot decline on blockchain.');
-      return;
-    }
-
     try {
       setError('');
       setSuccess('');
       
-      // Update both blockchain and Firestore
-      await declineAppointment(id, blockchainId);
+      // Use the appointment ID from blockchain (for blockchain appointments) or blockchainId (for legacy)
+      const appointmentId = blockchainId || id;
+      await declineAppointment(appointmentId);
       
-      setSuccess(`Appointment declined successfully on blockchain!`);
+      setSuccess(`Appointment declined successfully!`);
     } catch (error) {
       console.error('Error declining appointment:', error);
-      setError('Failed to decline appointment. You may not be authorized or the appointment may not exist on blockchain.');
+      setError('Failed to decline appointment. You may not be authorized or the appointment may not exist.');
     }
   };
 
@@ -122,63 +116,125 @@ const AppointmentList = () => {
         <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
           <p className="text-green-800 text-sm">{success}</p>
         </div>
-      )}
-
-      {appointments.map((appointment) => (
-        <div
-          key={appointment.id}
-          className="mb-4 p-4 border rounded-md border-gray-300"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <p><strong>Name:</strong> {appointment.name}</p>
-              <p><strong>Email:</strong> {appointment.email}</p>
-              <p><strong>Doctor:</strong> {appointment.doctor}</p>
-            </div>            <div>
-              <p><strong>Date & Time:</strong> {appointment.date} at {appointment.time}</p>
-              <p><strong>Reason:</strong> {appointment.reason}</p>
-              <p><strong>Blockchain ID:</strong> {appointment.blockchainId || 'Not yet assigned'}</p>
-            </div>
+      )}      {/* Display blockchain appointments if connected, otherwise show Firestore appointments */}
+      {isConnected ? (
+        blockchainAppointments.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-500">No appointments found on blockchain.</p>
           </div>
-          
-          <div className="flex items-center justify-between">            <p>
-              <strong>Status:</strong>{' '}
-              <span
-                className={
-                  appointment.status === 'pending'
-                    ? 'text-yellow-500'
-                    : appointment.status === 'approved'
-                    ? 'text-green-500'
-                    : 'text-red-500'
-                }
-              >
-                {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
-              </span>
-            </p>
+        ) : (
+          blockchainAppointments.map((appointment) => (
+            <div
+              key={appointment.id}
+              className="mb-4 p-4 border rounded-md border-gray-300 bg-white shadow-sm"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <p><strong>Appointment ID:</strong> {appointment.id}</p>
+                  <p><strong>Patient ID:</strong> {appointment.patientID}</p>
+                  <p><strong>Doctor:</strong> {appointment.doctorName}</p>
+                  <p className="text-xs text-gray-500 font-mono mt-1">
+                    Address: {appointment.doctor.slice(0, 10)}...{appointment.doctor.slice(-8)}
+                  </p>
+                </div>
+                <div>
+                  <p><strong>Timestamp:</strong> {appointment.timestamp.toLocaleString()}</p>
+                  <p><strong>Status:</strong>{' '}
+                    <span
+                      className={
+                        appointment.status === 'Pending'
+                          ? 'text-yellow-600 bg-yellow-100 px-2 py-1 rounded text-xs'
+                          : appointment.status === 'Approved'
+                          ? 'text-green-600 bg-green-100 px-2 py-1 rounded text-xs'
+                          : 'text-red-600 bg-red-100 px-2 py-1 rounded text-xs'
+                      }
+                    >
+                      {appointment.status}
+                    </span>
+                  </p>
+                </div>
+              </div>
+              
+              {appointment.status === 'Pending' && (
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => handleApprove(appointment.id)}
+                    disabled={loading}
+                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded disabled:bg-gray-300"
+                  >
+                    {loading ? 'Processing...' : 'Approve'}
+                  </button>
+                  <button
+                    onClick={() => handleDecline(appointment.id)}
+                    disabled={loading}
+                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded disabled:bg-gray-300"
+                  >
+                    {loading ? 'Processing...' : 'Decline'}
+                  </button>
+                </div>
+              )}
+            </div>
+          ))
+        )
+      ) : (
+        appointments.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-500">No appointments found.</p>
+          </div>
+        ) : (
+          appointments.map((appointment) => (
+            <div
+              key={appointment.id}
+              className="mb-4 p-4 border rounded-md border-gray-300"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <p><strong>Name:</strong> {appointment.name}</p>
+                  <p><strong>Email:</strong> {appointment.email}</p>
+                  <p><strong>Doctor:</strong> {appointment.doctor}</p>
+                </div>
+                <div>
+                  <p><strong>Date & Time:</strong> {appointment.date} at {appointment.time}</p>
+                  <p><strong>Reason:</strong> {appointment.reason}</p>
+                  <p><strong>Blockchain ID:</strong> {appointment.blockchainId || 'Not yet assigned'}</p>
+                </div>
+              </div>              
+              <div className="flex items-center justify-between">
+                <p>
+                  <strong>Status:</strong>{' '}
+                  <span
+                    className={
+                      appointment.status === 'pending'
+                        ? 'text-yellow-500'
+                        : appointment.status === 'approved'
+                        ? 'text-green-500'
+                        : 'text-red-500'
+                    }
+                  >
+                    {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                  </span>
+                </p>
             
-            <div className="flex space-x-4">              <button
-                onClick={() => handleApprove(appointment.id, appointment.blockchainId)}
-                className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                disabled={appointment.status !== 'pending' || loading || !isConnected}
-              >
-                {loading ? 'Processing...' : 'Approve'}
-              </button>
-              <button
-                onClick={() => handleDecline(appointment.id, appointment.blockchainId)}
-                className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                disabled={appointment.status !== 'pending' || loading || !isConnected}
-              >
-                {loading ? 'Processing...' : 'Decline'}
-              </button>
+                <div className="flex space-x-4">
+                  <button
+                    onClick={() => handleApprove(appointment.id, appointment.blockchainId)}
+                    className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    disabled={appointment.status !== 'pending' || loading || !isConnected}
+                  >
+                    {loading ? 'Processing...' : 'Approve'}
+                  </button>
+                  <button
+                    onClick={() => handleDecline(appointment.id, appointment.blockchainId)}
+                    className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    disabled={appointment.status !== 'pending' || loading || !isConnected}
+                  >
+                    {loading ? 'Processing...' : 'Decline'}
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      ))}
-
-      {appointments.length === 0 && (
-        <div className="text-center py-8">
-          <p className="text-gray-500 text-lg">No appointment requests found.</p>
-        </div>
+          ))
+        )
       )}
     </div>
   );

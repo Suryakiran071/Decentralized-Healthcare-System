@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useContract } from '../../../hooks/useContract';
+import UserAppointmentDashboard from '../../../Components/UserAppointmentDashboard';
 
 export default function User() {
   const { user } = useAuth();
@@ -76,7 +77,11 @@ export default function User() {
           </div>
           <h3 className="font-semibold text-gray-800 mb-1">Get Support</h3>
           <p className="text-sm text-gray-600">Submit support tickets for any issues or questions</p>
-        </Link>
+        </Link>      </div>
+
+      {/* Appointment Status Dashboard */}
+      <div className="mb-8">
+        <UserAppointmentDashboard />
       </div>
 
       {/* Recent Activity */}

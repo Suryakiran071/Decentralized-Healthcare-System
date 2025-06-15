@@ -12,9 +12,77 @@ export const useAppointments = () => {
   const { contract, isConnected } = useContract();
   const [loading, setLoading] = useState(false);
   const [appointments, setAppointments] = useState([]);
+  const [blockchainAppointments, setBlockchainAppointments] = useState([]);
   const [error, setError] = useState('');
 
-  // Fetch appointments from Firestore
+  // Helper function to get doctor name from address (you might want to move this to a service)
+  const getDoctorName = (address) => {
+    const doctors = {
+      '0x742d35Cc6635C0532925a3b8D5c9B3b5E2E5B9D8': 'Dr. Sarah Johnson',
+      '0x8ba1f109551bD432803012645Aac136c30C85a1c': 'Dr. Michael Chen', 
+      '0xc6272e8032853d7F12d2caDcb35eD742990D6C61': 'Dr. Emily Davis',
+      '0x4E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B1C2D3E4F': 'Dr. James Wilson'
+    };
+    return doctors[address] || `Unknown Doctor (${address.slice(0, 6)}...${address.slice(-4)})`;
+  };
+
+  // Fetch all appointments from blockchain
+  const fetchBlockchainAppointments = useCallback(async () => {
+    if (!contract || !isConnected) return;
+
+    try {
+      setLoading(true);
+      const totalAppointments = await contract.totalAppointments();
+      const appointmentsList = [];
+
+      for (let i = 1; i <= totalAppointments.toNumber(); i++) {
+        try {
+          const appointment = await contract.getAppointment(i);
+          appointmentsList.push({
+            id: appointment.appointmentID.toNumber(),
+            patientID: appointment.patientID.toNumber(),
+            doctor: appointment.doctor,
+            doctorName: getDoctorName(appointment.doctor),
+            timestamp: new Date(appointment.timestamp.toNumber() * 1000),
+            status: ['Pending', 'Approved', 'Declined'][appointment.status],
+            blockchainId: appointment.appointmentID.toNumber()
+          });
+        } catch (err) {
+          console.warn(`Failed to fetch appointment ${i}:`, err);
+        }
+      }
+
+      setBlockchainAppointments(appointmentsList);
+    } catch (error) {
+      console.error('Error fetching blockchain appointments:', error);
+      setError('Failed to fetch appointments from blockchain');
+    } finally {
+      setLoading(false);
+    }
+  }, [contract, isConnected]);
+
+  // Fetch patient's appointments from blockchain
+  const fetchPatientAppointments = useCallback(async (patientID) => {
+    if (!contract || !isConnected) return [];
+
+    try {
+      const appointments = await contract.getPatientAppointments(patientID);
+      return appointments.map(appointment => ({
+        id: appointment.appointmentID.toNumber(),
+        patientID: appointment.patientID.toNumber(),
+        doctor: appointment.doctor,
+        doctorName: getDoctorName(appointment.doctor),
+        timestamp: new Date(appointment.timestamp.toNumber() * 1000),
+        status: ['Pending', 'Approved', 'Declined'][appointment.status],
+        blockchainId: appointment.appointmentID.toNumber()
+      }));
+    } catch (error) {
+      console.error('Error fetching patient appointments:', error);
+      throw error;
+    }
+  }, [contract, isConnected]);
+
+  // Fetch appointments from Firestore (legacy)
   const fetchAppointments = useCallback(async () => {
     try {
       setLoading(true);
@@ -29,14 +97,21 @@ export const useAppointments = () => {
     }
   }, []);
 
-  // Subscribe to real-time updates for pending appointments
+  // Auto-fetch blockchain appointments when contract is available
+  useEffect(() => {
+    if (contract && isConnected) {
+      fetchBlockchainAppointments();
+    }
+  }, [contract, isConnected, fetchBlockchainAppointments]);
+
+  // Subscribe to real-time updates for pending appointments (legacy)
   useEffect(() => {
     const unsubscribe = subscribeToPendingAppointments((appointmentsData) => {
       setAppointments(appointmentsData);
     });
 
     return () => unsubscribe();
-  }, []);  const bookAppointment = useCallback(async (patientID, doctorAddress) => {
+  }, []);const bookAppointment = useCallback(async (patientID, doctorAddress) => {
     if (!contract || !isConnected) {
       throw new Error('Contract not connected');
     }
@@ -78,6 +153,9 @@ export const useAppointments = () => {
         event => event.event === 'AppointmentBooked'
       )?.args?.appointmentID || Date.now(); // Fallback to timestamp
 
+      // Refresh blockchain appointments after booking
+      await fetchBlockchainAppointments();
+
       return appointmentID;
     } catch (error) {
       console.error('Error booking appointment:', error);
@@ -85,31 +163,29 @@ export const useAppointments = () => {
     } finally {
       setLoading(false);
     }
-  }, [contract, isConnected]);const approveAppointment = useCallback(async (appointmentId, blockchainId) => {
+  }, [contract, isConnected]);  const approveAppointment = useCallback(async (appointmentId, blockchainId) => {
     if (!contract || !isConnected) {
       throw new Error('Contract not connected');
     }
 
-    // Validate blockchainId
-    if (!blockchainId || isNaN(blockchainId) || blockchainId <= 0) {
-      throw new Error('Invalid blockchain appointment ID');
+    // Use blockchainId if provided, otherwise use appointmentId
+    const validID = blockchainId || appointmentId;
+    if (!validID || isNaN(validID) || validID <= 0) {
+      throw new Error('Invalid appointment ID');
     }
 
     try {
       setLoading(true);
-      const validAppointmentID = Math.floor(Number(blockchainId));
+      const validAppointmentID = Math.floor(Number(validID));
       
-      console.log('Approving appointment with blockchain ID:', validAppointmentID);
+      console.log('Approving appointment with ID:', validAppointmentID);
       
-      // Update on blockchain first
+      // Update on blockchain
       const tx = await contract.approveAppointment(validAppointmentID);
       await tx.wait();
       
-      // Update in Firestore
-      await updateAppointmentStatus(appointmentId, 'approved', blockchainId);
-      
-      // Refresh appointments
-      await fetchAppointments();
+      // Refresh blockchain appointments to get updated status
+      await fetchBlockchainAppointments();
       
       return true;
     } catch (error) {
@@ -118,33 +194,30 @@ export const useAppointments = () => {
     } finally {
       setLoading(false);
     }
-  }, [contract, isConnected, fetchAppointments]);
-
+  }, [contract, isConnected, fetchBlockchainAppointments]);
   const declineAppointment = useCallback(async (appointmentId, blockchainId) => {
     if (!contract || !isConnected) {
       throw new Error('Contract not connected');
     }
 
-    // Validate blockchainId
-    if (!blockchainId || isNaN(blockchainId) || blockchainId <= 0) {
-      throw new Error('Invalid blockchain appointment ID');
+    // Use blockchainId if provided, otherwise use appointmentId
+    const validID = blockchainId || appointmentId;
+    if (!validID || isNaN(validID) || validID <= 0) {
+      throw new Error('Invalid appointment ID');
     }
 
     try {
       setLoading(true);
-      const validAppointmentID = Math.floor(Number(blockchainId));
+      const validAppointmentID = Math.floor(Number(validID));
       
-      console.log('Declining appointment with blockchain ID:', validAppointmentID);
+      console.log('Declining appointment with ID:', validAppointmentID);
       
-      // Update on blockchain first
+      // Update on blockchain
       const tx = await contract.declineAppointment(validAppointmentID);
       await tx.wait();
       
-      // Update in Firestore
-      await updateAppointmentStatus(appointmentId, 'declined', blockchainId);
-      
-      // Refresh appointments
-      await fetchAppointments();
+      // Refresh blockchain appointments to get updated status
+      await fetchBlockchainAppointments();
       
       return true;
     } catch (error) {
@@ -153,7 +226,7 @@ export const useAppointments = () => {
     } finally {
       setLoading(false);
     }
-  }, [contract, isConnected, fetchAppointments]);
+  }, [contract, isConnected, fetchBlockchainAppointments]);
   const getAppointmentDetails = useCallback(async (appointmentID) => {
     if (!contract || !isConnected) {
       throw new Error('Contract not connected');
@@ -223,9 +296,9 @@ export const useAppointments = () => {
       return '0';
     }
   }, [contract, isConnected]);
-
   return {
     appointments,
+    blockchainAppointments,
     loading,
     error,
     bookAppointment,
@@ -235,6 +308,8 @@ export const useAppointments = () => {
     getPatientAppointments,
     getTotalAppointments,
     fetchAppointments,
+    fetchBlockchainAppointments,
+    fetchPatientAppointments,
     setAppointments
   };
 };
