@@ -3,27 +3,25 @@ import { useContract } from '../../../hooks/useContract';
 import { useAppointments } from '../../../hooks/useAppointments';
 
 const AppointmentList = () => {
-  const { isConnected, connectWallet, account } = useContract();  const { 
-    appointments, 
+  const { isConnected, connectWallet, account } = useContract();  
+  const { 
     blockchainAppointments,
     approveAppointment, 
     declineAppointment, 
     loading, 
     error: appointmentsError,
-    fetchAppointments,
     fetchBlockchainAppointments
   } = useAppointments();
   
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  // Fetch appointments on component mount
+
+  // Fetch blockchain appointments on component mount
   useEffect(() => {
     if (isConnected) {
       fetchBlockchainAppointments();
-    } else {
-      fetchAppointments(); // Fallback to Firestore
     }
-  }, [isConnected, fetchAppointments, fetchBlockchainAppointments]);
+  }, [isConnected, fetchBlockchainAppointments]);
 
   const handleConnectWallet = async () => {
     try {
@@ -32,7 +30,9 @@ const AppointmentList = () => {
     } catch (error) {
       setError('Failed to connect wallet. Please make sure MetaMask is installed.');
     }
-  };  const handleApprove = async (id, blockchainId) => {
+  };
+
+  const handleApprove = async (id, blockchainId) => {
     if (!isConnected) {
       setError('Please connect your wallet first.');
       return;
@@ -52,6 +52,7 @@ const AppointmentList = () => {
       setError('Failed to approve appointment. You may not be authorized or the appointment may not exist on blockchain.');
     }
   };
+
   const handleDecline = async (id, blockchainId) => {
     if (!isConnected) {
       setError('Please connect your wallet first.');
@@ -100,7 +101,9 @@ const AppointmentList = () => {
             You can now approve or decline appointments on the blockchain.
           </p>
         </div>
-      )}      {error && (
+      )}
+
+      {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
           <p className="text-red-800 text-sm">{error}</p>
         </div>
@@ -116,7 +119,9 @@ const AppointmentList = () => {
         <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
           <p className="text-green-800 text-sm">{success}</p>
         </div>
-      )}      {/* Display blockchain appointments if connected, otherwise show Firestore appointments */}
+      )}
+
+      {/* Display blockchain appointments if connected */}
       {isConnected ? (
         blockchainAppointments.length === 0 ? (
           <div className="text-center py-8">
@@ -154,7 +159,7 @@ const AppointmentList = () => {
                   </p>
                 </div>
               </div>
-              
+
               {appointment.status === 'Pending' && (
                 <div className="flex space-x-2">
                   <button
@@ -177,64 +182,9 @@ const AppointmentList = () => {
           ))
         )
       ) : (
-        appointments.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-gray-500">No appointments found.</p>
-          </div>
-        ) : (
-          appointments.map((appointment) => (
-            <div
-              key={appointment.id}
-              className="mb-4 p-4 border rounded-md border-gray-300"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <p><strong>Name:</strong> {appointment.name}</p>
-                  <p><strong>Email:</strong> {appointment.email}</p>
-                  <p><strong>Doctor:</strong> {appointment.doctor}</p>
-                </div>
-                <div>
-                  <p><strong>Date & Time:</strong> {appointment.date} at {appointment.time}</p>
-                  <p><strong>Reason:</strong> {appointment.reason}</p>
-                  <p><strong>Blockchain ID:</strong> {appointment.blockchainId || 'Not yet assigned'}</p>
-                </div>
-              </div>              
-              <div className="flex items-center justify-between">
-                <p>
-                  <strong>Status:</strong>{' '}
-                  <span
-                    className={
-                      appointment.status === 'pending'
-                        ? 'text-yellow-500'
-                        : appointment.status === 'approved'
-                        ? 'text-green-500'
-                        : 'text-red-500'
-                    }
-                  >
-                    {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
-                  </span>
-                </p>
-            
-                <div className="flex space-x-4">
-                  <button
-                    onClick={() => handleApprove(appointment.id, appointment.blockchainId)}
-                    className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    disabled={appointment.status !== 'pending' || loading || !isConnected}
-                  >
-                    {loading ? 'Processing...' : 'Approve'}
-                  </button>
-                  <button
-                    onClick={() => handleDecline(appointment.id, appointment.blockchainId)}
-                    className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    disabled={appointment.status !== 'pending' || loading || !isConnected}
-                  >
-                    {loading ? 'Processing...' : 'Decline'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))
-        )
+        <div className="text-center py-8">
+          <p className="text-gray-500">Please connect your wallet to manage blockchain appointments.</p>
+        </div>
       )}
     </div>
   );

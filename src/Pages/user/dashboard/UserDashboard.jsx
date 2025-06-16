@@ -83,27 +83,6 @@ export default function User() {
       <div className="mb-8">
         <UserAppointmentDashboard />
       </div>
-
-      {/* Recent Activity */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-        <div className="space-y-3">
-          <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-            <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-            <div>
-              <p className="text-sm text-gray-800">Account created successfully</p>
-              <p className="text-xs text-gray-500">Welcome to MedEase!</p>
-            </div>
-          </div>
-          <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-            <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-            <div>
-              <p className="text-sm text-gray-800">Security: Two-factor authentication recommended</p>
-              <p className="text-xs text-gray-500">Enhance your account security</p>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
