@@ -48,9 +48,7 @@ const AppointmentRequestForm = () => {
     if (!email.trim()) {
       setError('Please enter your email address.');
       return;
-    }
-
-    if (!date) {
+    }    if (!date) {
       setError('Please select an appointment date.');
       return;
     }
@@ -58,7 +56,15 @@ const AppointmentRequestForm = () => {
     if (!time) {
       setError('Please select an appointment time.');
       return;
-    }    if (!selectedDoctor) {
+    }
+
+    // Validate the appointment is in the future
+    const appointmentDateTime = new Date(`${date}T${time}`);
+    const now = new Date();
+    if (appointmentDateTime <= now) {
+      setError('Please select a future date and time for your appointment.');
+      return;
+    }if (!selectedDoctor) {
       setError('Please select a healthcare provider.');
       return;
     }
@@ -69,14 +75,15 @@ const AppointmentRequestForm = () => {
     }    if (!patientID) {
       setError('Patient registration is required before booking appointments.');
       return;
-    }
-
-    try {
-      console.log('Booking appointment with patientID:', patientID, 'doctor address:', selectedDoctor.address);
-      
-      // Book appointment on blockchain using doctor's address
-      const appointmentID = await bookAppointment(patientID, selectedDoctor.address);
-        setSuccess(`Appointment booked successfully with ${selectedDoctor.name}! Your appointment ID is: ${appointmentID}`);
+    }    try {
+        // Book appointment on blockchain using doctor's address with date/time and reason
+      const appointmentID = await bookAppointment(
+        patientID, 
+        selectedDoctor.address, 
+        date, 
+        time, 
+        reason
+      );setSuccess(`Appointment booked successfully with ${selectedDoctor.name}! Your appointment ID is: ${appointmentID}. Appointment scheduled for ${date} at ${time}.`);
       
       // Reset form
       setName('');
@@ -101,6 +108,8 @@ const AppointmentRequestForm = () => {
         setError('Transaction was cancelled. Please try again to book your appointment.');
       } else if (error.message.includes('insufficient funds')) {
         setError('Insufficient funds in your wallet to complete the transaction.');
+      } else if (error.message.includes('future date and time')) {
+        setError('Please select a future date and time for your appointment.');
       } else {
         setError('Failed to book appointment. Please check your wallet connection and try again.');
       }
@@ -193,14 +202,14 @@ const AppointmentRequestForm = () => {
             </div>
 
             {/* Date and Time in One Line */}
-            <div className="flex space-x-4">
-              <div className="w-1/2">
+            <div className="flex space-x-4">              <div className="w-1/2">
                 <label className="block text-sm font-medium text-gray-700">Appointment Date</label>
                 <input
                   type="date"
                   className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]} // Prevent selecting past dates
                   required
                 />
               </div>

@@ -5,12 +5,10 @@ import React, { useState } from 'react';
 const UserSupportForm = () => {
   const [issue, setIssue] = useState('');
   const [description, setDescription] = useState('');
-
   const handleSubmit = (e) => {
     e.preventDefault();
     // Handle ticket submission logic here
     // You can send the data to the backend or save it in the state
-    console.log('Support Ticket Submitted:', { issue, description });
     setIssue('');
     setDescription('');
     // Maybe redirect to the user's ticket list page after submitting

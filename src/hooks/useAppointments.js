@@ -14,7 +14,6 @@ export const useAppointments = () => {
   const [appointments, setAppointments] = useState([]);
   const [blockchainAppointments, setBlockchainAppointments] = useState([]);
   const [error, setError] = useState('');
-
   // Helper function to get doctor name from address (you might want to move this to a service)
   const getDoctorName = (address) => {
     const doctors = {
@@ -35,20 +34,34 @@ export const useAppointments = () => {
       const totalAppointments = await contract.totalAppointments();
       const appointmentsList = [];
 
-      for (let i = 1; i <= totalAppointments.toNumber(); i++) {
-        try {
+      for (let i = 1; i <= totalAppointments.toNumber(); i++) {        try {
           const appointment = await contract.getAppointment(i);
-          appointmentsList.push({
+          
+          // Handle both old and new appointment structures
+          const appointmentData = {
             id: appointment.appointmentID.toNumber(),
             patientID: appointment.patientID.toNumber(),
             doctor: appointment.doctor,
             doctorName: getDoctorName(appointment.doctor),
-            timestamp: new Date(appointment.timestamp.toNumber() * 1000),
             status: ['Pending', 'Approved', 'Declined'][appointment.status],
             blockchainId: appointment.appointmentID.toNumber()
-          });
-        } catch (err) {
-          console.warn(`Failed to fetch appointment ${i}:`, err);
+          };
+
+          // Check if it's the new contract structure with separate timestamps
+          if (appointment.appointmentTimestamp && appointment.bookingTimestamp) {
+            appointmentData.appointmentTimestamp = new Date(appointment.appointmentTimestamp.toNumber() * 1000);
+            appointmentData.bookingTimestamp = new Date(appointment.bookingTimestamp.toNumber() * 1000);
+            appointmentData.reason = appointment.reason || 'General consultation';
+          } else {
+            // Old contract structure - use timestamp for both
+            const timestamp = new Date(appointment.timestamp.toNumber() * 1000);
+            appointmentData.appointmentTimestamp = timestamp;
+            appointmentData.bookingTimestamp = timestamp;
+            appointmentData.reason = 'General consultation';
+          }
+
+          appointmentsList.push(appointmentData);        } catch (err) {
+          // Skip appointments that can't be fetched
         }
       }
 
@@ -63,19 +76,34 @@ export const useAppointments = () => {
 
   // Fetch patient's appointments from blockchain
   const fetchPatientAppointments = useCallback(async (patientID) => {
-    if (!contract || !isConnected) return [];
-
-    try {
+    if (!contract || !isConnected) return [];    try {
       const appointments = await contract.getPatientAppointments(patientID);
-      return appointments.map(appointment => ({
-        id: appointment.appointmentID.toNumber(),
-        patientID: appointment.patientID.toNumber(),
-        doctor: appointment.doctor,
-        doctorName: getDoctorName(appointment.doctor),
-        timestamp: new Date(appointment.timestamp.toNumber() * 1000),
-        status: ['Pending', 'Approved', 'Declined'][appointment.status],
-        blockchainId: appointment.appointmentID.toNumber()
-      }));
+      return appointments.map(appointment => {
+        // Handle both old and new appointment structures
+        const appointmentData = {
+          id: appointment.appointmentID.toNumber(),
+          patientID: appointment.patientID.toNumber(),
+          doctor: appointment.doctor,
+          doctorName: getDoctorName(appointment.doctor),
+          status: ['Pending', 'Approved', 'Declined'][appointment.status],
+          blockchainId: appointment.appointmentID.toNumber()
+        };
+
+        // Check if it's the new contract structure with separate timestamps
+        if (appointment.appointmentTimestamp && appointment.bookingTimestamp) {
+          appointmentData.appointmentTimestamp = new Date(appointment.appointmentTimestamp.toNumber() * 1000);
+          appointmentData.bookingTimestamp = new Date(appointment.bookingTimestamp.toNumber() * 1000);
+          appointmentData.reason = appointment.reason || 'General consultation';
+        } else {
+          // Old contract structure - use timestamp for both
+          const timestamp = new Date(appointment.timestamp.toNumber() * 1000);
+          appointmentData.appointmentTimestamp = timestamp;
+          appointmentData.bookingTimestamp = timestamp;
+          appointmentData.reason = 'General consultation';
+        }
+
+        return appointmentData;
+      });
     } catch (error) {
       console.error('Error fetching patient appointments:', error);
       throw error;
@@ -87,10 +115,8 @@ export const useAppointments = () => {
     if (contract && isConnected) {
       fetchBlockchainAppointments();
     }
-  }, [contract, isConnected, fetchBlockchainAppointments]);
-
-  // Book an appointment on the blockchain
-  const bookAppointment = useCallback(async (patientID, doctorAddress) => {
+  }, [contract, isConnected, fetchBlockchainAppointments]);  // Book an appointment on the blockchain
+  const bookAppointment = useCallback(async (patientID, doctorAddress, appointmentDate, appointmentTime, reason) => {
     if (!contract || !isConnected) {
       throw new Error('Contract not connected');
     }
@@ -103,6 +129,14 @@ export const useAppointments = () => {
     // Validate and checksum the doctor address
     if (!doctorAddress || typeof doctorAddress !== 'string') {
       throw new Error('Invalid doctor address: address is required');
+    }
+
+    if (!appointmentDate || !appointmentTime) {
+      throw new Error('Appointment date and time are required');
+    }
+
+    if (!reason || reason.trim().length === 0) {
+      throw new Error('Appointment reason is required');
     }
 
     let validDoctorAddress;
@@ -118,12 +152,36 @@ export const useAppointments = () => {
       setLoading(true);
       const validPatientID = Math.floor(Number(patientID));
       
-      console.log('Booking appointment with:', { 
-        patientID: validPatientID, 
-        doctor: validDoctorAddress 
-      });
+      // Convert date and time to Unix timestamp
+      const appointmentDateTime = new Date(`${appointmentDate}T${appointmentTime}`);
+      const appointmentTimestamp = Math.floor(appointmentDateTime.getTime() / 1000);
+        // Validate the appointment is in the future
+      const now = Math.floor(Date.now() / 1000);
+      if (appointmentTimestamp <= now) {
+        throw new Error('Appointment must be scheduled for a future date and time');
+      }
       
-      const tx = await contract.bookAppointment(validPatientID, validDoctorAddress);
+      let tx;      try {
+        // Try the new 4-parameter version first
+        tx = await contract.bookAppointment(
+          validPatientID, 
+          validDoctorAddress, 
+          appointmentTimestamp,
+          reason.trim()
+        );
+      } catch (contractError) {
+        // If that fails, check if it's because of wrong parameter count
+        if (contractError.message.includes('too many arguments') || 
+            contractError.message.includes('UNEXPECTED_ARGUMENT')) {
+          
+          // Fall back to old 2-parameter version
+          tx = await contract.bookAppointment(validPatientID, validDoctorAddress);
+        } else {
+          // Re-throw other errors
+          throw contractError;
+        }
+      }
+      
       const receipt = await tx.wait();
       
       const appointmentID = receipt.events?.find(
@@ -139,7 +197,7 @@ export const useAppointments = () => {
     } finally {
       setLoading(false);
     }
-  }, [contract, isConnected]);
+  }, [contract, isConnected, fetchBlockchainAppointments]);
 
   // Approve appointment on blockchain
   const approveAppointment = useCallback(async (appointmentId, blockchainId) => {
@@ -150,13 +208,9 @@ export const useAppointments = () => {
     const validID = blockchainId || appointmentId;
     if (!validID || isNaN(validID) || validID <= 0) {
       throw new Error('Invalid appointment ID');
-    }
-
-    try {
+    }    try {
       setLoading(true);
       const validAppointmentID = Math.floor(Number(validID));
-      
-      console.log('Approving appointment with ID:', validAppointmentID);
       
       const tx = await contract.approveAppointment(validAppointmentID);
       await tx.wait();
@@ -181,13 +235,9 @@ export const useAppointments = () => {
     const validID = blockchainId || appointmentId;
     if (!validID || isNaN(validID) || validID <= 0) {
       throw new Error('Invalid appointment ID');
-    }
-
-    try {
+    }    try {
       setLoading(true);
       const validAppointmentID = Math.floor(Number(validID));
-      
-      console.log('Declining appointment with ID:', validAppointmentID);
       
       const tx = await contract.declineAppointment(validAppointmentID);
       await tx.wait();

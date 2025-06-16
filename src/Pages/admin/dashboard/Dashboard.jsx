@@ -22,13 +22,13 @@ const Dashboard = () => {
       fetchBlockchainAppointments();
     }
   }, [isConnected, fetchBlockchainAppointments]);
-
   // Transform blockchain appointments to calendar format
   useEffect(() => {
     if (blockchainAppointments && blockchainAppointments.length > 0) {
       const transformedAppointments = blockchainAppointments.map(appointment => {
-        // Convert timestamp to date and time
-        const date = new Date(appointment.timestamp);
+        // Convert appointmentTimestamp to date and time
+        const appointmentDate = appointment.appointmentTimestamp || appointment.timestamp;
+        const date = new Date(appointmentDate);
         const dateString = date.toISOString().split('T')[0]; // YYYY-MM-DD format
         const timeString = date.toLocaleTimeString('en-US', { 
           hour12: false, 
@@ -42,25 +42,25 @@ const Dashboard = () => {
           email: `patient${appointment.patientID}@healthcare.com`, // Generated email
           date: dateString,
           time: timeString,
-          reason: 'Healthcare Consultation', // Generic reason since it's not stored in blockchain
+          reason: appointment.reason || 'Healthcare Consultation',
           status: appointment.status,
           doctor: appointment.doctorName,
           blockchainId: appointment.id,
-          patientID: appointment.patientID
+          patientID: appointment.patientID,
+          appointmentTimestamp: appointment.appointmentTimestamp,
+          bookingTimestamp: appointment.bookingTimestamp
         };
       });
       
       setAppointments(transformedAppointments);
     }
   }, [blockchainAppointments]);
-
   const handleDateClick = (dateString) => {
     const dateAppointments = appointments.filter(apt => apt.date === dateString);
     if (dateAppointments.length > 0) {
-      console.log(`Appointments for ${dateString}:`, dateAppointments);
       // You can add navigation to a detailed view or open a modal here
     }
-  };  return (
+  };return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50">
 
       {/* Connection Status */}

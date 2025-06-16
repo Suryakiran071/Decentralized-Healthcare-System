@@ -132,8 +132,7 @@ const AppointmentList = () => {
             <div
               key={appointment.id}
               className="mb-4 p-4 border rounded-md border-gray-300 bg-white shadow-sm"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            >              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                   <p><strong>Appointment ID:</strong> {appointment.id}</p>
                   <p><strong>Patient ID:</strong> {appointment.patientID}</p>
@@ -143,7 +142,9 @@ const AppointmentList = () => {
                   </p>
                 </div>
                 <div>
-                  <p><strong>Timestamp:</strong> {appointment.timestamp.toLocaleString()}</p>
+                  <p><strong>Appointment Date:</strong> {appointment.appointmentTimestamp?.toLocaleDateString()}</p>
+                  <p><strong>Appointment Time:</strong> {appointment.appointmentTimestamp?.toLocaleTimeString()}</p>
+                  <p><strong>Reason:</strong> {appointment.reason}</p>
                   <p><strong>Status:</strong>{' '}
                     <span
                       className={
@@ -156,6 +157,9 @@ const AppointmentList = () => {
                     >
                       {appointment.status}
                     </span>
+                  </p>
+                  <p className="text-xs text-gray-400 mt-2">
+                    <strong>Booked on:</strong> {appointment.bookingTimestamp?.toLocaleString()}
                   </p>
                 </div>
               </div>

@@ -16,7 +16,7 @@ const DoctorSelector = ({ onDoctorSelect, selectedDoctor }) => {
       available: true
     },
     {
-      address: '0x8ba1f109551bD432803012645Aac136c30C85a1c',
+      address: '0xD9bc4687f972765cB21f42D69a872c83661e6800',
       name: 'Dr. Michael Chen',
       specialty: 'Neurology',
       available: true
@@ -34,7 +34,6 @@ const DoctorSelector = ({ onDoctorSelect, selectedDoctor }) => {
       available: true
     }
   ];
-
   // Checksum all addresses to prevent validation errors
   const availableDoctors = rawDoctors.map(doctor => {
     try {
@@ -43,7 +42,7 @@ const DoctorSelector = ({ onDoctorSelect, selectedDoctor }) => {
         address: ethers.utils.getAddress(doctor.address)
       };
     } catch (error) {
-      console.warn(`Invalid address for ${doctor.name}: ${doctor.address}`);
+      // Invalid address, skip this doctor
       return null;
     }
   }).filter(Boolean);

@@ -187,13 +187,20 @@ const UserAppointmentDashboard = () => {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>
                           </div>
-                        </div>
-                        <div className="flex-1 min-w-0">
+                        </div>                        <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900 truncate">
                             {getDoctorName(appointment.doctor)}
                           </p>
                           <p className="text-sm text-gray-500">
-                            {appointment.timestamp.toLocaleString()}
+                            <strong>Appointment:</strong> {appointment.appointmentTimestamp?.toLocaleDateString()} at {appointment.appointmentTimestamp?.toLocaleTimeString()}
+                          </p>
+                          {appointment.reason && (
+                            <p className="text-xs text-gray-400 mt-1">
+                              <strong>Reason:</strong> {appointment.reason}
+                            </p>
+                          )}
+                          <p className="text-xs text-gray-400 mt-1">
+                            <strong>Booked:</strong> {appointment.bookingTimestamp?.toLocaleString()}
                           </p>
                         </div>
                       </div>
