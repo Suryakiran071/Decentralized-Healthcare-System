@@ -15,7 +15,6 @@ const Signup = () => {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
   const navigate = useNavigate();
-
   const handleSignup = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
@@ -43,17 +42,24 @@ const Signup = () => {
   const handleGoogleSignup = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
 
-      // Set role as 'patient' by default for Google signups
-      await setDoc(doc(db, 'users', user.uid), {
-        email: user.email,
-        role: 'patient', // default role is patient
-      });
+      const userCredential = await signInWithPopup(auth, provider);
+      const user = userCredential.user;
+      
+      // Define admin emails
+      const ADMIN_EMAILS = [
+        'admin@medease.com',
+        'healthcare@medease.com',
+        'provider@medease.com'
+      ];
+      
+      // Redirect based on user role
+      if (ADMIN_EMAILS.includes(user.email)) {
+        navigate('/dashboard');
+      } else {
+        navigate('/user');
+      }
 
-      // Redirect to patient landing page after Google sign-in
-      navigate('/patientlanding');
     } catch (error) {
       setError(error.message);
     }

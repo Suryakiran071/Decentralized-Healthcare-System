@@ -2,50 +2,19 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
-import logo from '../assets/logo_nobg.png';  // Import your logo image here
+import { useAuth } from '../contexts/AuthContext';
+import logo from '../assets/logo_nobg.png';  /
 
 const Navbar = () => {
-  const [user, setUser] = useState(null);
+  const { user, isAdmin, isUser } = useAuth();
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const navigate = useNavigate();
-
-  // Create a reference for the dropdown and button to detect outside clicks
-  const dropdownRef = useRef(null);
-  const profileButtonRef = useRef(null);
-
-  // Get the current user when the component mounts
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
-      setUser(currentUser);
-    });
-
-    // Function to handle clicks outside the dropdown
-    const handleClickOutside = (event) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target) &&
-        profileButtonRef.current &&
-        !profileButtonRef.current.contains(event.target)
-      ) {
-        setDropdownVisible(false);
-      }
-    };
-
-    // Add event listener to detect outside clicks
-    document.addEventListener('mousedown', handleClickOutside);
-
-    return () => {
-      // Cleanup the event listener on component unmount
-      document.removeEventListener('mousedown', handleClickOutside);
-      unsubscribe(); // Clean up the Firebase subscription
-    };
-  }, []);
 
   // Logout function
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      navigate('/login'); // Redirect to login page after logout
+      navigate('/login');
     } catch (error) {
       console.error("Error logging out", error);
     }
@@ -57,25 +26,60 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white p-5 flex justify-between items-center text-black">
-      {/* Left Side: Logo */}
+    <nav className="bg-white p-4 flex justify-between items-center text-black border-b border-gray-200">
       <div className="flex items-center ml-8">
         <img src={logo} alt="Logo" className="h-10 w-auto" />  {/* Render the logo */}
       </div>
+      <div className="text-2xl font-semibold">
+        <Link to={user ? (isAdmin ? '/dashboard' : '/user') : '/login'}>
+          MedEase
+        </Link>
+      </div>
 
-      {/* Right Side: Links and Profile */}
+      {/* Center: Navigation Links */}
+      <div className="flex items-center space-x-6">
+        {user && isAdmin && (
+          <>
+            <Link to="/dashboard" className="text-black hover:text-gray-700">
+              Dashboard
+            </Link>
+            <Link to="/appointments" className="text-black hover:text-gray-700">
+              Appointments
+            </Link>
+            <Link to="/healthcare" className="text-black hover:text-gray-700">
+              Healthcare
+            </Link>
+            <Link to="/support" className="text-black hover:text-gray-700">
+              Support
+            </Link>
+          </>
+        )}
+
+        {user && isUser && (
+          <>
+            <Link to="/user" className="text-black hover:text-gray-700">
+              Dashboard
+            </Link>
+            <Link to="/user/appointments" className="text-black hover:text-gray-700">
+              Book Appointment
+            </Link>
+            <Link to="/user/records" className="text-black hover:text-gray-700">
+              My Records
+            </Link>
+            <Link to="/user/support" className="text-black hover:text-gray-700">
+              Support
+            </Link>
+          </>
+        )}
+    <nav className="bg-white p-5 flex justify-between items-center text-black">
+      
+
+      {/* Right Side: Login/Profile */}
       <div className="flex items-center space-x-6">
         {/* Login Link */}
         {!user && (
           <Link to="/login" className="text-black hover:text-gray-700">
             Login
-          </Link>
-        )}
-
-        {/* Appointments Link */}
-        {user && (
-          <Link to="/appointments" className="text-black hover:text-gray-700">
-            Appointments
           </Link>
         )}
 
@@ -93,38 +97,19 @@ const Navbar = () => {
 
             {/* Dropdown Menu */}
             {dropdownVisible && (
-              <div
-                ref={dropdownRef}
-                className="absolute right-0 mt-2 bg-white text-black rounded-lg shadow-lg p-4 w-48"
-              >
-                {/* Profile Dropdown Links */}
-                <Link
-                  to="/patientlanding"
-                  className="block text-sm text-gray-700 mb-2 hover:bg-gray-200 p-2 rounded-md"
-                >
-                  Home
-                </Link>
-                <Link
-                  to="/profile"
-                  className="block text-sm text-gray-700 mb-2 hover:bg-gray-200 p-2 rounded-md"
-                >
-                  Profile
-                </Link>
-                <Link
-                  to="/records"
-                  className="block text-sm text-gray-700 mb-2 hover:bg-gray-200 p-2 rounded-md"
-                >
-                  View Records
-                </Link>
-                <Link
-                  to="/support/submit"
-                  className="block text-sm text-gray-700 mb-2 hover:bg-gray-200 p-2 rounded-md"
-                >
-                  Support
-                </Link>
+
+
+              <div className="absolute right-0 mt-2 bg-white text-black rounded-lg shadow-lg p-4 w-48 border border-gray-200">
+                <p className="text-sm mb-2 font-medium">{user.email}</p>
+                <p className="text-xs text-gray-500 mb-3">
+                  Role: {isAdmin ? 'Admin' : 'Patient'}
+                </p>
+                <hr className="mb-3" />
+
                 <button
                   onClick={handleLogout}
-                  className="text-red-500 hover:bg-gray-200 p-2 rounded-md w-full text-left"
+                  className="text-red-500 hover:underline text-sm"
+
                 >
                   Logout
                 </button>
